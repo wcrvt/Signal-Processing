@@ -5,32 +5,7 @@
 
 int main()
 {
-
-	//Global seting
-	const double Ts=1e-5;
-	/* -------- */
-		
-	//Data loading
-	int ret=0;
-	FILE *fd=fopen("data.dat","r");
-	if (fd == NULL){ printf("Cannot open a file.\n"); exit(1); }
-	
-	double data=0.0;
-	int DataNum=0;
-	
-	while((ret=fscanf(fd,"%*lf %lf",&data))!=EOF) DataNum++;
-	printf("DataNum=%d\n",DataNum);
-	rewind(fd);
-	
-	double *ref=(double *)malloc(sizeof(double)*DataNum);
-	for(int i=0; i<DataNum; i++){
-		fscanf(fd,"%*lf %lf",&data);
-		ref[i]=data;
-	}
-	/* -------- */
-	
-	// FFT setting
-	int fftSize = DataNum;
+	const int	fftSize = pow(2,16)+653;
 	fftw_complex	*in, *out, *restore, *z, *envelope;
 	fftw_plan	fft_plan, hilbert_plan;
 
@@ -41,13 +16,19 @@ int main()
 
 	fft_plan = fftw_plan_dft_1d(fftSize, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
 	hilbert_plan = fftw_plan_dft_1d(fftSize, z, envelope, FFTW_BACKWARD , FFTW_ESTIMATE);
-	/* -------- */
+
+	const double Ts=1e-5;
+	double t=0.0;
+	double *ref=(double *)malloc(sizeof(double)*fftSize);
+
+	for (int i = 0 ; i < fftSize ; i ++) {
+		ref[i]=sin(2.0*M_PI*20*t)+3.0;//sin(2.0*M_PI*20*t)*exp(-5.0*t)*(1.0-cos(2.0*M_PI*2*t)) + 3.0;
+		t+=Ts;
+	}
 	
-	//File pointer
 	FILE *fa=fopen("average.dat","w");
 	FILE *fp=fopen("power.dat","w");
 	FILE *fe=fopen("envelope.dat","w");
-	/* -------- */
 		
 	//Average
 	double ref_sum=0;
@@ -55,7 +36,6 @@ int main()
 	for (int i = 0 ; i < fftSize ; i ++) ref_sum+=ref[i];
 	average=ref_sum/(double) fftSize;
 	for (int i = 0 ; i < fftSize ; i ++) fprintf(fa, "%lf %lf\n", (double)i*Ts, ref[i]-average);
-	/* -------- */
 	
 	//RMS value (root+mean+square)
 	double *ref_trim=(double *)malloc(sizeof(double)*fftSize);
@@ -76,7 +56,6 @@ int main()
 	ref_trim_rms=sqrt(ref_trim_sm);
 	printf("The RMS of a wave: %lf\n", ref_rms);
 	printf("The RMS of ripple: %lf\n", ref_trim_rms);
-	/* -------- */
 	
 	//Power spectrum
 	static double power=0.0;
@@ -92,7 +71,6 @@ int main()
 		power=sqrt(out[i][0]*out[i][0]+out[i][1]*out[i][1]);
 		fprintf(fp, "%lf %lf\n", (double)i/(Ts*fftSize), 20.0*log10(2*power));
 	}
-	/* -------- */
 
 
 	//Envelope --Peak2Peak--
@@ -119,7 +97,7 @@ int main()
 		envelope_amp=sqrt(pow(envelope[i][0],2.0)+pow(envelope[i][1],2.0));
 		fprintf(fe, "%lf %lf %lf %lf\n", (double)i*Ts, ref_trim[i], fabs(ref_trim[i]), envelope_amp);
 	}
-	/* -------- */
+	
 	
 	free(ref);
 	free(ref_trim);
