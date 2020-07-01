@@ -60,7 +60,7 @@ int main()
 	//Power spectrum
 	static double power=0.0;
 	for (int i = 0 ; i < fftSize ; i ++){
-		in[i][0] = ref_trim[i]/fftSize;
+		in[i][0] = ref/fftSize;
 		in[i][1] = 0.0;
 	}
 	
