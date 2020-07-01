@@ -5,7 +5,7 @@
 
 int main()
 {
-	const int	fftSize = pow(2,16);
+	const int	fftSize = pow(2,16)+653;
 	fftw_complex	*in, *out, *restore, *z, *envelope;
 	fftw_plan	fft_plan, hilbert_plan;
 
@@ -60,7 +60,7 @@ int main()
 	//Power spectrum
 	static double power=0.0;
 	for (int i = 0 ; i < fftSize ; i ++){
-		in[i][0] = ref[i]/fftSize;
+		in[i][0] = ref_trim[i]/fftSize;
 		in[i][1] = 0.0;
 	}
 	
